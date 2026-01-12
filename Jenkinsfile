@@ -28,7 +28,7 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                bat "trivy image --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1 samihannandedkar/node-cicd-app:latest"
+                bat "trivy image --severity CRITICAL --exit-code 1 samihannandedkar/node-cicd-app:latest"
             }
         }
 
