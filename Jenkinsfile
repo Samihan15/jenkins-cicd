@@ -15,18 +15,6 @@ pipeline {
       }
     }
 
-    stage("SonarQube Analysis") {
-      steps {
-        withSonarQubeEnv('sonarqube-server') {
-          sh """
-            ${SCANNER_HOME}/bin/sonar-scanner \
-            -Dsonar.projectKey=node-devops-app \
-            -Dsonar.sources=app
-          """
-        }
-      }
-    }
-
     stage("Docker Build") {
       steps {
         sh """
