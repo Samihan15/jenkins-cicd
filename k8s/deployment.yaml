@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: node
-        image: samihannandedkar/node-devops-app:latest
+        image: samihannandedkar/node-cicd-app:latest
         ports:
         - containerPort: 3000
