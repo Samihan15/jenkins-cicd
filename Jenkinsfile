@@ -37,16 +37,15 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'docker-access',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    bat """
-                    echo %PASS% | docker login -u %USER% --password-stdin
-                    docker push %IMAGE%:latest
-                    """
+                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
+                    bat 'docker push samihannandedkar/node-cicd-app:latest'
                 }
             }
         }
+
 
         stage('Deploy to Minikube') {
             steps {
