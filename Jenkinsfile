@@ -32,18 +32,23 @@ pipeline {
             }
         }
 
-        stage('Docker Push') {
+        stage('Build and Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-access',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
-                    bat 'docker push samihannandedkar/node-cicd-app:latest'
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-access', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        // The credentials are now available as environment variables $DOCKER_USER and $DOCKER_PASS
+                        sh '''
+                            # Use set +x to prevent the password from being echoed in the console log
+                            set +x
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            set -x
+                            docker build -t your_dockerhub_username/your_image_name:latest .
+                            docker push your_dockerhub_username/your_image_name:latest
+                        '''
+                    }
                 }
             }
-}
+        }
 
 
 
