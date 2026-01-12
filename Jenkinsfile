@@ -43,7 +43,8 @@ pipeline {
                     bat 'docker push samihannandedkar/node-cicd-app:latest'
                 }
             }
-        }
+}
+
 
 
         stage('Deploy to Minikube') {
