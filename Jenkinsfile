@@ -53,9 +53,13 @@ pipeline {
 
 
         stage('Deploy to Minikube') {
-            steps {
-                bat 'kubectl apply -f k8s/'
-            }
+        steps {
+            bat '''
+            set KUBECONFIG=C:\\ProgramData\\Jenkins\\.jenkins\\.kube\\config
+            kubectl apply -f k8s/
+            '''
         }
+}
+
     }
 }
