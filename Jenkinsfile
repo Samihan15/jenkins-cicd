@@ -48,15 +48,11 @@ pipeline {
         }
     }
 }
-
-
-
-
         stage('Deploy to Minikube') {
         steps {
             bat '''
-            set KUBECONFIG=C:\\ProgramData\\Jenkins\\.jenkins\\.kube\\config
             kubectl apply -f k8s/
+            kubectl get pods
             '''
         }
 }
