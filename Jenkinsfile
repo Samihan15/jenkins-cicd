@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE = "samihannandedkar/node-cicd-app"
+        CLUSTER = "jenkins-cluster"
     }
 
     stages {
@@ -14,50 +15,40 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                bat 'cd app && npm install'
-            }
-        }
-
         stage('Docker Build') {
             steps {
-                bat "docker build -t %IMAGE%:latest ."
+                sh "docker build -t $IMAGE:latest app"
             }
         }
 
         stage('Trivy Scan') {
             steps {
-                bat "trivy image samihannandedkar/node-cicd-app:latest"
+                sh "trivy image --severity CRITICAL,HIGH $IMAGE:latest"
             }
         }
-// --severity CRITICAL --exit-code 1 
 
-        stage('Docker Login') {
-    steps {
-        withCredentials([usernamePassword(
-            credentialsId: 'docker-access',
-            usernameVariable: 'DOCKER_USER',
-            passwordVariable: 'DOCKER_PASS'
-        )]) {
-            bat '''
-            set PASSWORD=%DOCKER_PASS%
-            echo %PASSWORD%>pass.txt
-            docker login -u %DOCKER_USER% --password-stdin < pass.txt
-            del pass.txt
-            '''
+        stage('Create Kind Cluster') {
+            steps {
+                sh '''
+                kind get clusters | grep $CLUSTER || kind create cluster --name $CLUSTER
+                '''
+            }
         }
-    }
-}
-        stage('Deploy to Minikube') {
-        steps {
-            bat 'set KUBECONFIG=C:\\ProgramData\\Jenkins\\.kube\\config'
-            bat 'kubectl get nodes'
 
-            bat 'kubectl apply -f deployment.yml'
-                bat 'kubectl apply -f service.yml'
+        stage('Load Image to Kind') {
+            steps {
+                sh "kind load docker-image $IMAGE:latest --name $CLUSTER"
+            }
         }
-}
 
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                kubectl apply -f deployment.yml
+                kubectl apply -f service.yml
+                kubectl rollout status deployment node-app
+                '''
+            }
+        }
     }
 }
