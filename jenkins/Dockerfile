@@ -26,3 +26,6 @@ RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/
 VOLUME /var/run/docker.sock
 
 USER jenkins
+
+
+# ab218e3889a44c8eb26da020dff6ef9d   Jenkins password
