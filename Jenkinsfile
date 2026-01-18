@@ -51,11 +51,10 @@ pipeline {
 }
         stage('Deploy to Minikube') {
         steps {
-            bat 'set KUBECONFIG=C:\ProgramData\Jenkins\.kube\config'
             bat 'kubectl apply -f deployment.yml'
             bat 'kubectl apply -f service.yml'
             bat 'minikube service node-app'
-            
+
         }
 }
 
