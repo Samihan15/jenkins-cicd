@@ -51,7 +51,9 @@ pipeline {
 }
         stage('Deploy to Minikube') {
         steps {
-            bat 'kubectl apply -f deployment.yml --validate=false'
+            bat 'kubectl apply -f deployment.yml'
+            bat 'kubectl apply -f service.yml'
+            bat 'minikube service node-app'
         }
 }
 
