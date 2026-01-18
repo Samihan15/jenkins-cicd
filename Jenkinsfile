@@ -51,7 +51,7 @@ pipeline {
 }
         stage('Deploy to Minikube') {
         steps {
-            bat 'kubectl apply -f deployment.yaml --validate=false'
+            bat 'kubectl apply -f deployment.yml --validate=false'
         }
 }
 
