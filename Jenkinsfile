@@ -54,8 +54,8 @@ pipeline {
             bat 'set KUBECONFIG=C:\\ProgramData\\Jenkins\\.kube\\config'
             bat 'kubectl get nodes'
 
-            bat 'kubectl apply -f deployment.yml \n
-                 kubectl apply -f service.yml'
+            bat 'kubectl apply -f deployment.yml'
+                bat 'kubectl apply -f service.yml'
         }
 }
 
