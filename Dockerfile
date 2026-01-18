@@ -1,16 +1,28 @@
-FROM node:18-alpine3.20
+FROM jenkins/jenkins:lts
 
-WORKDIR /app
+USER root
 
-COPY app/package*.json ./
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    docker.io \
+    curl \
+    apt-transport-https \
+    ca-certificates \
+    gnupg \
+    lsb-release
 
-RUN npm ci --omit=dev
+# Install kubectl
+RUN curl -LO https://dl.k8s.io/release/v1.29.0/bin/linux/amd64/kubectl && \
+    chmod +x kubectl && mv kubectl /usr/local/bin/
 
-COPY app .
+# Install kind
+RUN curl -Lo /usr/local/bin/kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64 && \
+    chmod +x /usr/local/bin/kind
 
-RUN addgroup -S nodegroup && adduser -S nodeuser -G nodegroup
-USER nodeuser
+# Install Trivy
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
-EXPOSE 3000
+# Docker socket access
+VOLUME /var/run/docker.sock
 
-CMD ["node", "index.js"]
+USER jenkins
