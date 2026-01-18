@@ -51,10 +51,11 @@ pipeline {
 }
         stage('Deploy to Minikube') {
         steps {
-            bat 'kubectl apply -f deployment.yml --validate=false'
-            bat 'kubectl apply -f service.yml --validate=false'
-            bat 'minikube service node-app'
+            bat 'set KUBECONFIG=C:\\ProgramData\\Jenkins\\.kube\\config'
+            bat 'kubectl get nodes'
 
+            bat 'kubectl apply -f deployment.yml \n
+                 kubectl apply -f service.yml'
         }
 }
 
