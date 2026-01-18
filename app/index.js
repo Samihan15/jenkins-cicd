@@ -6,5 +6,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(3000, "0.0.0.0", () => {
-  console.log("Server running");
+  console.log("Server running on 3000");
 });
