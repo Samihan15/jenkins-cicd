@@ -42,21 +42,33 @@ pipeline {
       }
     }
 
-    stage('Create Cluster') {
-      steps {
+    stage('Create Kind Cluster') {
+    steps {
         sh '''
         kind delete cluster --name jenkins-cluster || true
-        kind create cluster --name jenkins-cluster --config kind-config.yml
+        kind create cluster --name jenkins-cluster --config kind-config.yaml
+
+        # 🔥 FIX: regenerate kubeconfig
+        mkdir -p ~/.kube
+        kind get kubeconfig --name jenkins-cluster > ~/.kube/config
         '''
-      }
     }
+}
 
-    stage('Install Ingress Controller') {
-      steps {
-         sh '''
-        echo "Waiting for cluster to be ready..."
-        kubectl wait --for=condition=Ready nodes --all --timeout=120s
+stage('Wait for Cluster') {
+    steps {
+        sh '''
+        echo "Waiting for Kubernetes API..."
+        until kubectl get nodes; do
+          sleep 5
+        done
+        '''
+    }
+}
 
+stage('Install Ingress Controller') {
+    steps {
+        sh '''
         kubectl apply --validate=false -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 
         kubectl wait --namespace ingress-nginx \
@@ -64,8 +76,9 @@ pipeline {
           --selector=app.kubernetes.io/component=controller \
           --timeout=180s
         '''
-      }
     }
+}
+
 
     stage('Load Image to Cluster') {
       steps {
