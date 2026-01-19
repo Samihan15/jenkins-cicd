@@ -46,7 +46,7 @@ pipeline {
       steps {
         sh '''
         kind delete cluster --name jenkins-cluster || true
-        kind create cluster --name jenkins-cluster --config kind-config.yaml
+        kind create cluster --name jenkins-cluster --config kind-config.yml
         '''
       }
     }
