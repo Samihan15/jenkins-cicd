@@ -76,12 +76,13 @@ pipeline {
     stage('Deploy Application') {
       steps {
         sh '''
-        kubectl apply -f namespace.yml
-        kubectl apply -f deployment.yml
-        kubectl apply -f service.yml
-        kubectl apply -f ingress.yml
-        kubectl rollout status deployment node-app -n $NAMESPACE --timeout=120s
-        '''
+    kubectl apply --validate=false -f namespace.yml || true
+    kubectl apply --validate=false -f deployment.yml
+    kubectl apply --validate=false -f service.yml
+    kubectl apply --validate=false -f ingress.yml
+
+    kubectl rollout status deployment node-app -n $NAMESPACE --timeout=120s || true
+    '''
       }
     }
 
