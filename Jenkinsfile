@@ -55,17 +55,6 @@ pipeline {
     }
 }
 
-stage('Wait for Cluster') {
-    steps {
-        sh '''
-        echo "Waiting for Kubernetes API..."
-        until kubectl get nodes; do
-          sleep 5
-        done
-        '''
-    }
-}
-
 stage('Install Ingress Controller') {
     steps {
         sh '''
