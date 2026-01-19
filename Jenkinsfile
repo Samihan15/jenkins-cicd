@@ -3,7 +3,6 @@ pipeline {
 
   environment {
     IMAGE = "samihannandedkar/node-cicd-app"
-    CLUSTER = "jenkins-demo"
   }
 
   stages {
@@ -21,13 +20,13 @@ pipeline {
       }
     }
 
-    stage('Security Scan (Trivy)') {
+    stage('Security Scan') {
       steps {
         sh "trivy image --severity CRITICAL,HIGH $IMAGE:latest || true"
       }
     }
 
-    stage('Docker Login & Push') {
+    stage('Push Image') {
       steps {
         withCredentials([usernamePassword(
           credentialsId: 'docker-access',
@@ -42,27 +41,6 @@ pipeline {
       }
     }
 
-    stage('Create Kind Cluster') {
-      steps {
-        sh '''
-        kind delete cluster --name $CLUSTER || true
-        kind create cluster --name $CLUSTER
-
-        mkdir -p ~/.kube
-        kind get kubeconfig --name $CLUSTER > ~/.kube/config
-
-        echo "Waiting for cluster to be ready..."
-        sleep 30
-        '''
-      }
-    }
-
-    stage('Load Image to Kind') {
-      steps {
-        sh "kind load docker-image $IMAGE:latest --name $CLUSTER"
-      }
-    }
-
     stage('Deploy to Kubernetes') {
       steps {
         sh '''
@@ -73,12 +51,9 @@ pipeline {
       }
     }
 
-    stage('Demo Proof') {
+    stage('Show Result') {
       steps {
         sh '''
-        echo "=============================="
-        echo "DEPLOYMENT SUCCESSFUL"
-        echo "=============================="
         kubectl get pods
         kubectl get svc
         '''
