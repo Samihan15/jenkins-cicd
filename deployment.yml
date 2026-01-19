@@ -17,3 +17,4 @@ spec:
         image: samihannandedkar/node-cicd-app:latest
         ports:
         - containerPort: 3000
+
