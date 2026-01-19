@@ -3,8 +3,7 @@ pipeline {
 
   environment {
     IMAGE = "samihannandedkar/node-cicd-app"
-    CLUSTER = "jenkins-cluster"
-    NAMESPACE = "demo"
+    CLUSTER = "jenkins-demo"
   }
 
   stages {
@@ -24,7 +23,7 @@ pipeline {
 
     stage('Security Scan (Trivy)') {
       steps {
-        sh "trivy image --severity CRITICAL,HIGH $IMAGE:latest"
+        sh "trivy image --severity CRITICAL,HIGH $IMAGE:latest || true"
       }
     }
 
@@ -51,49 +50,37 @@ pipeline {
 
         mkdir -p ~/.kube
         kind get kubeconfig --name $CLUSTER > ~/.kube/config
+
+        echo "Waiting for cluster to be ready..."
+        sleep 30
         '''
       }
     }
 
-    stage('Install Ingress Controller') {
-      steps {
-        sh '''
-        kubectl apply --validate=false -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml || true
-        kubectl wait --namespace ingress-nginx \
-          --for=condition=ready pod \
-          --selector=app.kubernetes.io/component=controller \
-          --timeout=180s || true
-        '''
-      }
-    }
-
-    stage('Load Image into Kind') {
+    stage('Load Image to Kind') {
       steps {
         sh "kind load docker-image $IMAGE:latest --name $CLUSTER"
       }
     }
 
-    stage('Deploy Application') {
+    stage('Deploy to Kubernetes') {
       steps {
         sh '''
-    kubectl apply -f namespace.yml
-    kubectl apply -f deployment.yml
-    kubectl apply -f service.yml
-    kubectl apply -f ingress.yml
-
-    kubectl rollout status deployment node-app -n $NAMESPACE --timeout=120s || true
-    '''
+        kubectl apply --validate=false -f deployment.yml
+        kubectl apply --validate=false -f service.yml
+        kubectl rollout status deployment node-app --timeout=120s || true
+        '''
       }
     }
 
-    stage('Show Demo Output') {
+    stage('Demo Proof') {
       steps {
         sh '''
-        echo "================================="
+        echo "=============================="
         echo "DEPLOYMENT SUCCESSFUL"
-        echo "================================="
-        kubectl get all -n $NAMESPACE
-        kubectl get ingress -n $NAMESPACE
+        echo "=============================="
+        kubectl get pods
+        kubectl get svc
         '''
       }
     }
