@@ -77,7 +77,6 @@ pipeline {
       steps {
         sh '''
         kubectl apply -f namespace.yml
-        kubectl apply -f secret.yml -n $NAMESPACE
         kubectl apply -f deployment.yml
         kubectl apply -f service.yml
         kubectl apply -f ingress.yml
