@@ -53,8 +53,12 @@ pipeline {
 
     stage('Install Ingress Controller') {
       steps {
-        sh '''
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+         sh '''
+        echo "Waiting for cluster to be ready..."
+        kubectl wait --for=condition=Ready nodes --all --timeout=120s
+
+        kubectl apply --validate=false -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+
         kubectl wait --namespace ingress-nginx \
           --for=condition=ready pod \
           --selector=app.kubernetes.io/component=controller \
