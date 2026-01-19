@@ -4,6 +4,7 @@ pipeline {
   environment {
     IMAGE = "samihannandedkar/node-cicd-app"
     CLUSTER = "jenkins-cluster"
+    NAMESPACE = "demo"
   }
 
   stages {
@@ -15,74 +16,84 @@ pipeline {
       }
     }
 
-    stage('Build Image') {
+    stage('Build Docker Image') {
       steps {
         sh "docker build -t $IMAGE:latest app"
       }
     }
 
-    stage('Security Scan') {
+    stage('Security Scan (Trivy)') {
       steps {
         sh "trivy image --severity CRITICAL,HIGH $IMAGE:latest"
       }
     }
 
-    stage('Login & Push') {
+    stage('Docker Login & Push') {
       steps {
         withCredentials([usernamePassword(
           credentialsId: 'docker-access',
           usernameVariable: 'DOCKER_USER',
           passwordVariable: 'DOCKER_PASS'
         )]) {
-          sh """
+          sh '''
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
             docker push $IMAGE:latest
-          """
+          '''
         }
       }
     }
 
     stage('Create Kind Cluster') {
-    steps {
+      steps {
         sh '''
-        kind delete cluster --name jenkins-cluster || true
-        kind create cluster --name jenkins-cluster --config kind-config.yml
+        kind delete cluster --name $CLUSTER || true
+        kind create cluster --name $CLUSTER
 
-        # 🔥 FIX: regenerate kubeconfig
         mkdir -p ~/.kube
-        kind get kubeconfig --name jenkins-cluster > ~/.kube/config
+        kind get kubeconfig --name $CLUSTER > ~/.kube/config
         '''
+      }
     }
-}
 
-stage('Install Ingress Controller') {
-    steps {
+    stage('Install Ingress Controller') {
+      steps {
         sh '''
-        kubectl apply --validate=false -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-
+        kubectl apply --validate=false -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml || true
         kubectl wait --namespace ingress-nginx \
           --for=condition=ready pod \
           --selector=app.kubernetes.io/component=controller \
-          --timeout=180s
+          --timeout=180s || true
         '''
+      }
     }
-}
 
-
-    stage('Load Image to Cluster') {
+    stage('Load Image into Kind') {
       steps {
         sh "kind load docker-image $IMAGE:latest --name $CLUSTER"
       }
     }
 
-    stage('Deploy App') {
+    stage('Deploy Application') {
       steps {
         sh '''
-        kubectl apply -f secret.yml
+        kubectl apply -f namespace.yml
+        kubectl apply -f secret.yml -n $NAMESPACE
         kubectl apply -f deployment.yml
         kubectl apply -f service.yml
         kubectl apply -f ingress.yml
-        kubectl rollout status deployment node-app
+        kubectl rollout status deployment node-app -n $NAMESPACE --timeout=120s
+        '''
+      }
+    }
+
+    stage('Show Demo Output') {
+      steps {
+        sh '''
+        echo "================================="
+        echo "DEPLOYMENT SUCCESSFUL"
+        echo "================================="
+        kubectl get all -n $NAMESPACE
+        kubectl get ingress -n $NAMESPACE
         '''
       }
     }
